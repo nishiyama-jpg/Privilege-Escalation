@@ -1,6 +1,7 @@
-# Privilege-Escalation
-Performing privilege escalation attack using Metasploit.
+# Privilege Escalation
+Demonstrating a Privilege Escalation Attack Using Metasploit.
 
-I'll be demonstrating a technique (out of many) to perform privilege escalation on a windows machine using a linux machine.
+This tutorial showcases one of the many techniques to perform privilege escalation on a Windows victim machine using a Linux machine as the attacker system.
 
-Disclaimer: Please note that the attack mechanism demonstrated here is for educational purposes only and should not be used to compromise or harm any system or network without explicit permission. The author (moi) takes no responsibility for any unauthorized use or damage caused by this attack mechanism.
+**Disclaimer:
+This demonstration is intended for educational purposes only. Unauthorized use of these techniques to compromise or harm any system or network is strictly prohibited and may be illegal. Always obtain explicit permission before performing any security-related activities. The author assumes no responsibility for any misuse or resulting damage.**
